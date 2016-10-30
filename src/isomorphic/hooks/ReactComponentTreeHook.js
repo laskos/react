@@ -187,7 +187,6 @@ function describeID(id: DebugID): string {
 
 var ReactComponentTreeHook = {
   onSetChildren(id: DebugID, nextChildIDs: Array<DebugID>): void {
-    //console.log('setting children', id, nextChildIDs)
     var item = getItem(id);
     invariant(item, 'Item must have been set');
     item.childIDs = nextChildIDs;
@@ -228,9 +227,13 @@ var ReactComponentTreeHook = {
       );
     }
 
-    // nextChildIDs will clear negative ids for virtual text items
-    if (getItem(-id)) {
-      item.childIDs.push(-id);
+    if (getItem(-id) &&
+      nextChildIDs.length === 0 &&
+      (typeof item.element.props.children === 'string' ||
+      typeof item.element.props.children === 'number')) {
+
+      // Bring text item back on the stage
+      item.childIDs = [-id];
     }
   },
 
@@ -239,9 +242,7 @@ var ReactComponentTreeHook = {
 
     // This is special case for HostText, which fiber dosent process
     if (ReactDOMFeatureFlags.useFiber &&
-      typeof element === 'object' &&
-      (typeof element.props.children === 'string' ||
-      typeof element.props.children === 'number')) {
+      typeof element === 'object') {
 
       var childItem = {
         element: element.props.children,
@@ -255,7 +256,9 @@ var ReactComponentTreeHook = {
       // Negative debug ids are reserved for internal items
       setItem(-id, childItem);
 
-      childIDs.push(-id);
+      if (typeof element.props.children !== 'undefined') {
+        childIDs.push(-id);
+      }
     }
 
     var item = {
@@ -277,7 +280,32 @@ var ReactComponentTreeHook = {
       // In this case, ignore the element.
       return;
     }
+
+    if (element === null) {
+      console.log('null element', element, item);
+    }
     item.element = element;
+
+    if (typeof element === 'string' || typeof element === 'number') {
+      item.text = element;
+    }
+
+    var textItem = getItem(-id);
+    // console.log('processing ', element.type, element.props.children, textItem);
+
+    if (textItem && typeof element.type === 'string') {
+      if (typeof element.props.children === 'string' ||
+        typeof element.props.children === 'number') {
+
+        textItem.text = textItem.element = element.props.children;
+        item.childIDs = [-id];
+
+        console.log('Update text item to', element.props.children, textItem);
+      } else if (typeof element.props.children === 'undefined') {
+
+        item.childIDs = [];
+      }
+    }
   },
 
   onMountComponent(id: DebugID): void {
@@ -289,6 +317,7 @@ var ReactComponentTreeHook = {
       addRoot(id);
     }
 
+    // @todo get it from child
     var textItem = getItem(-id);
 
     if (textItem) {
@@ -428,7 +457,7 @@ var ReactComponentTreeHook = {
   },
 
   getRootIDs,
-  getRegisteredIDs: getItemIDs,
+  getRegisteredIDs: getItemIDs, getItem,
 };
 
 module.exports = ReactComponentTreeHook;

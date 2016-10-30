@@ -293,6 +293,28 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
   }
 
   function commitWork(current : ?Fiber, finishedWork : Fiber) : void {
+    if (__DEV__ && ReactInstrumentation.debugTool) {
+      if (current) {
+
+        let element;
+
+        if (current.tag === HostText) {
+          element = finishedWork.pendingProps || finishedWork.memoizedProps;
+        } else {
+          element = {
+            type: finishedWork.type,
+            props: finishedWork.memoizedProps,
+            _fiber: finishedWork,
+          };
+        }
+
+        // TODO: Debug id cannot be mapped to fiber object
+        // It gets cloned with every update but debugID shuld be same
+        // This workaround works only for first update
+        ReactInstrumentation.debugTool.onBeforeUpdateComponent(getDebugID(current), element);
+      }
+    }
+
     switch (finishedWork.tag) {
       case ClassComponent: {
         detachRefIfNeeded(current, finishedWork);

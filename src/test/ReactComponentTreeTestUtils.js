@@ -20,6 +20,7 @@ function getRootDisplayNames() {
 
 function getRegisteredDisplayNames() {
   return ReactComponentTreeHook.getRegisteredIDs()
+    .filter(id => id >= 0)
     .map(ReactComponentTreeHook.getDisplayName);
 }
 
