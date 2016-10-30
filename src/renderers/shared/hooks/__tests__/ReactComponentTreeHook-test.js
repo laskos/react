@@ -76,13 +76,13 @@ describe('ReactComponentTreeHook', () => {
       // // Purging should have no effect
       // // on the tree we expect to see.
       // ReactComponentTreeHook.purgeUnmountedComponents();
-      // expectWrapperTreeToEqual(expectedTree, true);
+      expectWrapperTreeToEqual(expectedTree, true);
     });
 
     // Unmounting the root node should purge
-    // // the whole subtree automatically.
-    // ReactDOM.unmountComponentAtNode(node);
-    // expectWrapperTreeToEqual(null);
+    // the whole subtree automatically.
+    ReactDOM.unmountComponentAtNode(node);
+    expectWrapperTreeToEqual(null);
 
     // Server render every pair.
     // Ensure the tree is correct on every step.

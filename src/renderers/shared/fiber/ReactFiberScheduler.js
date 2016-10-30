@@ -23,6 +23,10 @@ var ReactFiberCompleteWork = require('ReactFiberCompleteWork');
 var ReactFiberCommitWork = require('ReactFiberCommitWork');
 var ReactCurrentOwner = require('ReactCurrentOwner');
 
+if (__DEV__) {
+  var ReactInstrumentation = require('ReactInstrumentation');
+}
+
 var { cloneFiber } = require('ReactFiber');
 var { trapError, acknowledgeErrorInBoundary } = require('ReactFiberErrorBoundary');
 
@@ -112,6 +116,11 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
   }
 
   function commitAllWork(finishedWork : Fiber, ignoreUnmountingErrors : boolean) {
+
+    if (__DEV__) {
+      ReactInstrumentation.debugTool.onBeginFlush();
+    }
+
     // Commit all the side-effects within a tree.
 
     // Commit phase is meant to be atomic and non-interruptible.
@@ -207,6 +216,10 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     // Now that the tree has been committed, we can handle errors.
     if (allTrappedErrors) {
       handleErrors(allTrappedErrors);
+    }
+
+    if (__DEV__) {
+      ReactInstrumentation.debugTool.onEndFlush();
     }
   }
 

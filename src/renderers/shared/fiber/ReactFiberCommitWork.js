@@ -27,6 +27,11 @@ var {
 var { trapError } = require('ReactFiberErrorBoundary');
 var { callCallbacks } = require('ReactFiberUpdateQueue');
 
+if (__DEV__) {
+  var ReactInstrumentation = require('ReactInstrumentation');
+  var getDebugID = require('getDebugID');
+}
+
 var {
   Placement,
   PlacementAndUpdate,
@@ -272,15 +277,18 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
             return trapError(current, error);
           }
         }
-        return null;
+
+        break;
       }
       case HostComponent: {
         detachRef(current);
-        return null;
+
+        break;
       }
-      default: {
-        return null;
-      }
+    }
+
+    if (__DEV__ && ReactInstrumentation.debugTool) {
+      ReactInstrumentation.debugTool.onUnmountComponent(getDebugID(current));
     }
   }
 

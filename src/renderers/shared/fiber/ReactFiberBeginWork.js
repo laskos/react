@@ -386,12 +386,20 @@ module.exports = function<T, P, I, TI, C>(
 
     if (__DEV__ && ReactInstrumentation.debugTool) {
       if (!current) {
-        ReactInstrumentation.debugTool.onBeforeMountComponent(
-          getDebugID(workInProgress),
-          {
+        let element, debugId;
+
+        if (workInProgress.tag === HostText) {
+          element = workInProgress.pendingProps;
+        } else {
+          element = {
             type: workInProgress.type,
             props: workInProgress.pendingProps,
-          },
+          };
+        }
+
+        ReactInstrumentation.debugTool.onBeforeMountComponent(
+          getDebugID(workInProgress),
+          element,
           workInProgress.return.tag === HostContainer ?
             0 :
             getDebugID(workInProgress.return)

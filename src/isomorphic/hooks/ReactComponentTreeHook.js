@@ -13,6 +13,8 @@
 'use strict';
 
 var ReactCurrentOwner = require('ReactCurrentOwner');
+var ReactDOMFeatureFlags = require('ReactDOMFeatureFlags');
+var getDebugID = require('getDebugID');
 
 var getComponentName = require('getComponentName');
 var invariant = require('invariant');
@@ -225,14 +227,42 @@ var ReactComponentTreeHook = {
         id
       );
     }
+
+    // nextChildIDs will clear negative ids for virtual text items
+    if (getItem(-id)) {
+      item.childIDs.push(-id);
+    }
   },
 
   onBeforeMountComponent(id: DebugID, element: ReactElement, parentID: DebugID): void {
+    let childIDs = [];
+
+    // This is special case for HostText, which fiber dosent process
+    if (ReactDOMFeatureFlags.useFiber &&
+      typeof element === 'object' &&
+      (typeof element.props.children === 'string' ||
+      typeof element.props.children === 'number')) {
+
+      var childItem = {
+        element: element.props.children,
+        parentID: id,
+        text: element.props.children,
+        childIDs: [],
+        isMounted: false,
+        updateCount: 0,
+      };
+
+      // Negative debug ids are reserved for internal items
+      setItem(-id, childItem);
+
+      childIDs.push(-id);
+    }
+
     var item = {
       element,
       parentID,
       text: null,
-      childIDs: [],
+      childIDs: childIDs,
       isMounted: false,
       updateCount: 0,
     };
@@ -258,6 +288,13 @@ var ReactComponentTreeHook = {
     if (isRoot) {
       addRoot(id);
     }
+
+    var textItem = getItem(-id);
+
+    if (textItem) {
+      textItem.isMounted = true;
+    }
+
     //console.log('mounted', item);
   },
 
